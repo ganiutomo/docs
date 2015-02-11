@@ -18,7 +18,7 @@ First, download the Laravel installer using Composer.
 
 	composer global require "laravel/installer=~1.1"
 
-Make sure to place the `~/.composer/vendor/bin` directory in your PATH so the `laravel` executable is found when you run the `laravel` command in your terminal.
+Make sure to place the `~/.composer/vendor/bin` directory in your PATH (or `C:\%HOMEPATH%\AppData\Roaming\Composer\vendor\bin` if working with Windows) so the `laravel` executable is found when you run the `laravel` command in your terminal.
 
 Once installed, the simple `laravel new` command will create a fresh Laravel installation in the directory you specify. For instance, `laravel new blog` would create a directory named `blog` containing a fresh Laravel installation with all dependencies installed. This method of installation is much faster than installing via Composer.
 
@@ -43,6 +43,10 @@ After installing Laravel, you may need to grant the web server write permissions
 Typically, you may use a web server such as Apache or Nginx to serve your Laravel applications. If you are on PHP 5.4+ and would like to use PHP's built-in development server, you may use the `serve` Artisan command:
 
 	php artisan serve
+	
+By default the HTTP-server will listen to port 8000. However if that port is already in use or you wish to serve multiple applications this way, you might want to specify what port to use. Just add the --port argument:
+	
+	php artisan serve --port=8080
 
 <a name="directories"></a>
 ### Directory Structure
