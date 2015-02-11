@@ -12,7 +12,7 @@
 
 The most basic response from a Laravel route is a string:
 
-	$router->get('/', function()
+	Route::get('/', function()
 	{
 		return 'Hello World';
 	});
@@ -26,21 +26,29 @@ However, for most routes and controller actions, you will be returning a full `I
 	return (new Response($content, $status))
 	              ->header('Content-Type', $value);
 
-> **Note:** For a full list of available `Response` methods, check out its [API documentation](http://laravel.com/api/4.2/Illuminate/Http/Response.html) and the [Symfony API documentation](http://api.symfony.com/2.5/Symfony/Component/HttpFoundation/Response.html).
+For convenience, you may also use the `response` helper:
+
+	return response($content, $status)
+	              ->header('Content-Type', $value);
+
+> **Note:** For a full list of available `Response` methods, check out its [API documentation](http://laravel.com/api/master/Illuminate/Http/Response.html) and the [Symfony API documentation](http://api.symfony.com/2.5/Symfony/Component/HttpFoundation/Response.html).
 
 #### Sending A View In A Response
 
-If you need access to the `Response` class methods, but want to return a view as the response content, you may use the `view` helper for convenience:
+If you need access to the `Response` class methods, but want to return a view as the response content, you may use the `view` method for convenience:
 
-	return (new Response(view('hello')))->header('Content-Type', $type);
+	return response()->view('hello')->header('Content-Type', $type);
 
 #### Attaching Cookies To Responses
 
-	return (new Response($content))->withCookie(cookie('name', 'value'));
+	return response($content)->withCookie(cookie('name', 'value'));
 
-#### The Response Factory
+#### Method Chaining
 
-The `Illuminate\Contracts\Routing\ResponseFactory` [contract](/docs/master/contracts) provides a variety of helpful methods for generating `Response` and `RedirectResponse` instances.
+Keep in mind that most `Response` methods are chainable, allowing for the fluent building of responses:
+
+	return response()->view('hello')->header('Content-Type', $type)
+                     ->withCookie(cookie('name', 'value'));
 
 <a name="redirects"></a>
 ## Redirects
@@ -55,9 +63,17 @@ There are several ways to generate a `RedirectResponse` instance. The simplest m
 
 #### Returning A Redirect With Flash Data
 
-Redirecting to a new URL and [flashing data to the session](/docs/master/session) are typically done at the same time. So, for convenience, you can create a `RedirectResponse` instance **and** flash data to the session in a single method chain:
+Redirecting to a new URL and [flashing data to the session](/docs/master/session) are typically done at the same time. So, for convenience, you may create a `RedirectResponse` instance **and** flash data to the session in a single method chain:
 
 	return redirect('user/login')->with('message', 'Login Failed');
+
+#### Redirecting To The Previous URL
+
+You may wish to redirect the user to their previous location, for example, after a form submission. You can do so by using the `back` method:
+
+	return redirect()->back();
+
+	return redirect()->back()->withInput();
 
 #### Returning A Redirect To A Named Route
 
@@ -73,6 +89,10 @@ If your route has parameters, you may pass them as the second argument to the `r
 
 	return redirect()->route('profile', [1]);
 
+If you are redirecting to a route with an "ID" parameter that is being populated from an Eloquent model, you may simply pass the model itself. The ID will be extracted automatically:
+
+	return redirect()->route('profile', [$user]);
+
 #### Returning A Redirect To A Named Route Using Named Parameters
 
 	// For a route with the following URI: profile/{user}
@@ -83,17 +103,17 @@ If your route has parameters, you may pass them as the second argument to the `r
 
 Similarly to generating `RedirectResponse` instances to named routes, you may also generate redirects to [controller actions](/docs/master/controllers):
 
-	return redirect()->action('HomeController@index');
+	return redirect()->action('App\Http\Controllers\HomeController@index');
 
-> **Note:** You do not need to specify the full namespace to the controller. Only specify the portion of the controller that comes after the `App\Http\Controllers` portion of the namespace. The root portion namespace will be automatically preprended for you.
+> **Note:** You do not need to specify the full namespace to the controller if you have registered a root controller namespace via `URL::setRootControllerNamespace`.
 
 #### Returning A Redirect To A Controller Action With Parameters
 
-	return redirect()->action('UserController@profile', [1]);
+	return redirect()->action('App\Http\Controllers\UserController@profile', [1]);
 
 #### Returning A Redirect To A Controller Action Using Named Parameters
 
-	return redirect()->action('UserController@profile', ['user' => 1]);
+	return redirect()->action('App\Http\Controllers\UserController@profile', ['user' => 1]);
 
 <a name="other-responses"></a>
 ## Other Responses
@@ -104,11 +124,11 @@ The `response` helper may be used to conveniently generate other types of respon
 
 The `json` method will automatically set the `Content-Type` header to `application/json`:
 
-	return response()->json(['name' => 'Steve', 'state' => 'CA']);
+	return response()->json(['name' => 'Abigail', 'state' => 'CA']);
 
 #### Creating A JSONP Response
 
-	return response()->json(['name' => 'Steve', 'state' => 'CA'])
+	return response()->json(['name' => 'Abigail', 'state' => 'CA'])
 	                 ->setCallback($request->input('callback'));
 
 #### Creating A File Download Response
@@ -128,22 +148,21 @@ For example, from a [service provider's](/docs/master/providers) `boot` method:
 
 	<?php namespace App\Providers;
 
+	use Response;
 	use Illuminate\Support\ServiceProvider;
-	use Illuminate\Contracts\Routing\ResponseFactory;
 
 	class ResponseMacroServiceProvider extends ServiceProvider {
 
 		/**
 		 * Perform post-registration booting of services.
 		 *
-		 * @param  ResponseFactory  $events
 		 * @return void
 		 */
-		public function boot(ResponseFactory $response)
+		public function boot()
 		{
-			$response->macro('caps', function($value) use ($response)
+			Response::macro('caps', function($value)
 			{
-				return $response->make(strtoupper($value));
+				return Response::make(strtoupper($value));
 			});
 		}
 
